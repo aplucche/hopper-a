@@ -1,5 +1,20 @@
 # HOPPER-A — rubber-band jumping toy (42 mm cube, PLA + rubber bands only)
 
+***Note on LLM Usage***: *All code and documentation after this section is fully generated. This is a test of Opus 5.5 with Claude Code for physical design. The unmodified prompt is below (created on mobile so excuse some poor grammar and typos). All development was done in a Claude Code cloud env.*
+
+***One-shot prompt***:
+> Can you make an openscad file with all components laid out in a printable manner as well as a toggle-able view of an assembled version for an A1 mini bambu printer. The project: a hopper toy with only PLA and rubber bands that had an easy way to release without getting in the way. must be completely enclosable in 42mm cubed dimensions.  
+Goals are jumps n feet in the air with only parts specified and m rubber bands. Can withstand tension of specified number of bands without plastic breaking.  
+I will be unavailable so please act autonomously and with as high a quality end result as possible. Autonomously use version control along the way.
+
+**Video of assembled device in action:**
+
+https://github.com/user-attachments/assets/377958ef-da96-43a3-9e8f-0fc779bee860
+
+---
+-- Generated --
+# HOPPER-A — rubber-band jumping toy (42 mm cube, PLA + rubber bands only)
+
 ![animation](images/hopper_animation.gif)
 
 A 3D-printable jumping toy for the **Bambu Lab A1 mini**. It's made from PLA and standard **#8 rubber bands** and nothing else: no screws, springs or glue.
