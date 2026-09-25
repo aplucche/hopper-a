@@ -64,12 +64,12 @@ foot_side  = env - 2*env_margin;        // 41.2 square foot
 foot_cr    = 3;                         // foot corner radius
 
 // ---------------- foot ----------------
-t_plate  = 2.0;
+t_plate  = 1.6;
 boss_h   = 5.5;      // half size of central boss
 boss_top = 8.0;
 ten_h    = 3.0;      // tenon half size (u & v)
 ten_z0   = 0.4;
-spin     = 3.0;      // stem pin section (square)
+spin     = 3.3;      // stem pin section (square)
 spin_z0  = 2.4;
 spin_u0  = -boss_h;  // pin runs from here...
 spin_len = 10.8;     // ...for this long (+u end stops in the groove)
@@ -120,7 +120,7 @@ peg_r  = 1.5;
 bs_h   = 1.6;                             // band width (stands on edge)
 arm_z0 = t_plate + bs_h - 0.4;            // arm rests 0.4 into the band
 arm_z1 = arm_z0 + 2.6;
-arm_u1 = 21.6;
+arm_u1 = 17.8;
 pad_u0 = 20.5;
 pad_u1 = 27.4;
 pad_z0 = 6.0;
@@ -130,7 +130,8 @@ win_u0 = 15.4;  win_u1 = 22.0;  win_v = 4.7;   // window under the bow-string
 // ---------------- frame (T) ----------------
 stem_u  = 6;          // = print thickness of the frame
 stem_v  = 5;          // half width of stem
-cb_mid_z0 = top_z - 5;          // 36.6
+stem_win = [2.0, 13.0, 33.0];   // lightening window in the stem: half width, z0, z1
+cb_mid_z0 = top_z - 6;          // 35.6 (deep: takes the landing blow)
 cb_mid_v  = 10.2;
 cb_end_z0 = 37.6;
 cb_end_z1 = 40.6;               // bands on top stay below top_z
@@ -146,15 +147,15 @@ H_b     = d3 + 1.6;                           // 13.8
 z_b_rest = cb_mid_z0 - bump_t - H_b;          // body bottom at rest
 stroke  = z_b_rest - z_b_latch;
 slot_u  = 5.5;                                // band slot half width
-slot_v0 = 10.0;                               // band slot floor
+slot_v0 = 9.6;                                // band slot floor
 pk_v    = 6.6;                                // pocket half width
 d1      = boss_top - t_plate + fit_gap;       // boss pocket depth
 p3_u1   = 15.0;
 d4      = arm_z1 + fit_gap - t_plate;         // arm channel depth
 p4_u0   = 11.0;
 p4_v    = slot_v + 0.2;
-bpeg_z0 = 1.2;  bpeg_z1 = 3.0;  bpeg_u = 2.0;  // body band peg
-bpeg_v1 = 16.0; bknob = 0.7;
+bpeg_z0 = 1.2;  bpeg_z1 = 3.4;  bpeg_u = 2.3;  // body band peg
+bpeg_v1 = 16.2; bknob = 0.6;
 
 // ---------------- sanity checks ----------------
 assert(pr_bot_rel + z_b_min >= blk_top + 0.3, "prongs hit pivot block");
@@ -245,10 +246,11 @@ module lever_2d() {
                      [tail_u0, head_top - 1.6 - (head_u0 - tail_u0)]]);
             // arm
             translate([u_p, arm_z0]) square([arm_u1 - u_p, arm_z1 - arm_z0]);
-            // ramp + pad
+            // ramp + pad (the ramp lifts the arm clear of the outer bow-string
+            // strands so only the inner strands, close to the pivot, spring it)
             polygon([[arm_u1 - 0.01, arm_z0], [arm_u1 + 1.6, pad_z0], [pad_u1, pad_z0],
                      [pad_u1, pad_z1 - 0.8], [pad_u1 - 0.8, pad_z1], [pad_u0, pad_z1],
-                     [pad_u0 - 3.2, arm_z1]]);
+                     [pad_u0 - 3.2, arm_z1], [arm_u1 - 0.01, arm_z1]]);
         }
         translate([u_p, z_p]) circle(d=pv_d + fit_rot);
         translate([lp_u0 - fit_pin/2, z_c - fit_pin/2]) square(lp + fit_pin);
@@ -300,10 +302,13 @@ module frame_2d() {
             square([knob_w, top_z - cb_mid_z0 - 0.4]);
     }
 }
+module stem_window() offset(r=1) offset(delta=-1)
+    translate([-stem_win[0], stem_win[1]]) square([2*stem_win[0], stem_win[2] - stem_win[1]]);
 module frame() {
     difference() {
         rotate([90,0,90]) linear_extrude(stem_u, center=true) difference() {
             frame_2d();
+            stem_window();
             for (m=[0,1]) mirror([m,0]) translate([bump_v0, top_z - bump_rec]) square([bump_v1 - bump_v0, 2]);
         }
         // stem pin hole (vertical when printed)
@@ -438,6 +443,7 @@ module part_print(p) {
 // frame profile with the pin hole, for printing flat
 module frame_print_2d() difference() {
     frame_2d();
+    stem_window();
     for (m=[0,1]) mirror([m,0]) translate([bump_v0, top_z - bump_rec]) square([bump_v1 - bump_v0, 2]);
     translate([-(spin + fit_pin)/2, spin_z0 - fit_pin/2]) square(spin + fit_pin);
 }
@@ -500,8 +506,22 @@ if (view == "mech") {
     if (mech_part == "pivot_pin") pivot_pin_assembled();
 }
 if (view == "info") {
+    // everything tools/hopper_calc.py needs, as name=value pairs
     echo(str("HOPPER ", "stroke=", stroke, " z_b_rest=", z_b_rest, " z_b_latch=", z_b_latch,
              " H_b=", H_b, " z_c=", z_c, " u_p=", u_p, " z_p=", z_p, " h=", z_c - z_p,
-             " blk_top=", blk_top, " head_top=", head_top));
+             " blk_top=", blk_top, " head_top=", head_top, " e_bias=", e_bias, " barb_tilt=", barb_tilt,
+             " u_f=", u_f, " ov=", ov, " step_u=", step_u, " prong_u0=", prong_u0,
+             " prong_v0=", prong_v0, " prong_v1=", prong_v1, " barb_h=", barb_h, " lp=", lp,
+             " lw=", lw, " pad_u0=", pad_u0, " pad_u1=", pad_u1,
+             " arm_z0=", arm_z0, " arm_z1=", arm_z1,
+             " peg_u=", peg_u, " peg_v=", peg_v, " peg_r=", peg_r, " t_plate=", t_plate,
+             " stem_u=", stem_u, " stem_v=", stem_v, " stem_win=", stem_win[0],
+             " cb_mid_v=", cb_mid_v, " cb_mid_z0=", cb_mid_z0, " top_z=", top_z,
+             " cb_end_z0=", cb_end_z0, " cb_end_z1=", cb_end_z1, " cb_end_v=", cb_end_v,
+             " bump_v0=", bump_v0, " bump_v1=", bump_v1, " bump_rec=", bump_rec,
+             " bpeg_z0=", bpeg_z0, " bpeg_z1=", bpeg_z1, " bpeg_u=", bpeg_u, " slot_v0=", slot_v0,
+             " bpeg_v1=", bpeg_v1, " spin=", spin, " spin_z0=", spin_z0, " boss_h=", boss_h,
+             " boss_top=", boss_top, " ten_h=", ten_h, " pv_d=", pv_d, " blk_v=", blk_v,
+             " slot_v=", slot_v, " R_b=", R_b, " foot_side=", foot_side));
     cube(1);
 }
