@@ -226,11 +226,12 @@ class Hopper:
         return dict(v_rel=v_rel, ke=ke, bumper_cap=cap, v_hard=v_hard, sigma_wave=sigma_wave, F_pin=F_pin,
                     tau_pin=F_pin/(2*P["spin"]**2), F_stem=F_stem, sig_stem=F_stem/A_stem, sig_cb=sig_cb)
 
-def calibrate_band(mass_g, length_mm, band="#8", wraps=2):
-    """Back out G from a hanging test: a band `wraps`-folded between two pencils,
-    loaded with mass_g, stretched to loop length length_mm (mid-line)."""
+def calibrate_band(mass_g, gap_mm, pencil_d=7.0, band="#8", wraps=2):
+    """Back out G (MPa) from a hanging test: one band looped `wraps` times over
+    two pencils of diameter pencil_d, loaded with mass_g, pencils gap_mm apart
+    (centre to centre)."""
     Lf, w, t = BANDS[band]
-    lam = length_mm/(2*Lf/wraps)
+    lam = (2*gap_mm + math.pi*(pencil_d + t))/(2*Lf/wraps)
     F = mass_g/1000*G_ACC
     return F/(2*wraps*w*t*(lam - 1/lam**2))
 
